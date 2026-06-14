@@ -2,6 +2,14 @@
 
 This is the small routine for every new project before Codex or Claude starts doing real work.
 
+Use the levels from `docs/LEVELS.md`:
+
+- Level 0 is required.
+- Level 1 is recommended for any project that will continue tomorrow.
+- Level 2 keeps the context layer small and safe.
+- Level 3 is optional and only useful after the project has repeated findings, bugs, or decisions.
+- Level 4 is advanced. Do not start there.
+
 ## 1. Add the context layer
 
 Run from `ai-context-kit`:
@@ -22,6 +30,15 @@ Start with short files.
 - `VERIFICATION.md`: exact commands to check a change.
 - `DECISIONS.jsonl`: one durable decision per line.
 - `SESSION_SUMMARY.md`: what changed in the last session.
+- `CONTEXT_HYGIENE.md`: how to keep context files small, safe, and useful.
+
+Do not install or fill optional Level 3 files until the project actually needs them.
+
+When it does need them, run:
+
+```bash
+./scripts/init-ai-context.sh /path/to/project --with-level3
+```
 
 ## 3. Add the agent hint
 
@@ -69,3 +86,18 @@ git diff --check
 ```
 
 If the project has secrets nearby, run a targeted scan that excludes `.env` values from output.
+
+## 7. Context hygiene check
+
+Run:
+
+```bash
+./scripts/check-ai-context.sh /path/to/project
+```
+
+Fix warnings that mean:
+
+- a required context file is missing;
+- `DECISIONS.jsonl` or `FINDINGS.jsonl` is not valid JSONL;
+- `PROJECT_MAP.md` or `SESSION_SUMMARY.md` became too large;
+- tracked files look like secrets, databases, logs, uploads, or private keys.

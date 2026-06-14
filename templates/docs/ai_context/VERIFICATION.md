@@ -36,4 +36,4 @@ git diff --check
 - Runtime files не попали в git.
 - Проверки соответствуют зоне правки.
 - В `SESSION_SUMMARY.md` записано, что изменилось.
-
+- Если есть `scripts/check-ai-context.sh`, он запущен или причина пропуска понятна.
