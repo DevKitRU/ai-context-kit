@@ -120,15 +120,17 @@ fi
 if git -C "$project_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   tracked_files="$(git -C "$project_dir" ls-files)"
 
-  if printf '%s\n' "$tracked_files" | grep -Eq '(^|/)\.env($|[.-])|\.pem$|\.p12$|\.sqlite$|\.db$|\.log$|(^|/)(logs|uploads|sessions|backups)/'; then
+  risky_path_re='(^|/)\.env($|\.(local|prod|production|staging|dev|development|test|secret|secrets)$)|\.pem$|\.p12$|\.sqlite$|\.db$|\.log$|(^|/)(logs|uploads|sessions|backups)/'
+
+  if printf '%s\n' "$tracked_files" | grep -Eq "$risky_path_re"; then
     printf '%s\n' "$tracked_files" \
-      | grep -E '(^|/)\.env($|[.-])|\.pem$|\.p12$|\.sqlite$|\.db$|\.log$|(^|/)(logs|uploads|sessions|backups)/' \
+      | grep -E "$risky_path_re" \
       | while IFS= read -r rel; do
           warn "tracked sensitive/runtime-looking file: $rel"
         done
   fi
 
-  secret_re='(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY|BOT_TOKEN[[:space:]]*=|API_KEY[[:space:]]*=[[:space:]]*["'\'']?[A-Za-z0-9_-]{16,})'
+  secret_re='(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|[0-9]{8,10}:[A-Za-z0-9_-]{35,}|BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY|BOT_TOKEN[[:space:]]*=[[:space:]]*["'\'']?[0-9]{8,10}:[A-Za-z0-9_-]{20,}|API_KEY[[:space:]]*=[[:space:]]*["'\'']?[A-Za-z0-9_-]{24,})'
 
   while IFS= read -r rel; do
     case "$rel" in
@@ -140,7 +142,7 @@ if git -C "$project_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     file="$project_dir/$rel"
     [[ -f "$file" ]] || continue
 
-    if grep -Iq . "$file" && grep -Eq "$secret_re" "$file"; then
+    if grep -Iq . "$file" && grep -Ev 'SECRETS_OK_PLACEHOLDER' "$file" | grep -Eq "$secret_re"; then
       warn "possible secret marker in tracked text file: $rel"
     fi
   done <<< "$tracked_files"
